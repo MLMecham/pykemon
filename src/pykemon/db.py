@@ -24,4 +24,4 @@ def get_connection() -> duckdb.DuckDBPyConnection:
         ```
     """
     path = files("pykemon.data").joinpath("pykemon.duckdb")
-    return duckdb.connect(str(path), read_only=True)
+    return duckdb.connect(str(path))
