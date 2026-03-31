@@ -138,34 +138,35 @@ class BattleServer:
         print(f"  {t1.name}'s team: {', '.join(p.name for p in t1.roster)}")
         print(f"  {t2.name}'s team: {', '.join(p.name for p in t2.roster)}\n")
 
+    def _get_team_list(self) -> list[tuple]:
+        from ..db import get_connection
 
-def _get_team_list(self) -> list[tuple]:
-    from ..db import get_connection
+        con = get_connection()
+        teams = con.execute(
+            "SELECT team_id, team_name FROM team ORDER BY team_id"
+        ).fetchall()
+        con.close()
+        return teams
 
-    con = get_connection()
-    teams = con.execute(
-        "SELECT team_id, team_name FROM team ORDER BY team_id"
-    ).fetchall()
-    con.close()
-    return teams
+        def _battle_loop(self) -> None:
+            self.events = []
+            self._broadcast_full_state(awaiting="action")
 
-    def _battle_loop(self) -> None:
-        self.events = []
-        self._broadcast_full_state(awaiting="action")
+            while not self.is_over:
+                action1, action2 = self._collect_actions()
+                self.turn += 1
+                self.events = [f"Turn {self.turn} begins."]
+                self._resolve_turn(action1, action2)
+                if not self.is_over:
+                    self._broadcast_full_state(awaiting="action")
 
-        while not self.is_over:
-            action1, action2 = self._collect_actions()
-            self.turn += 1
-            self.events = [f"Turn {self.turn} begins."]
-            self._resolve_turn(action1, action2)
-            if not self.is_over:
-                self._broadcast_full_state(awaiting="action")
-
-        # Final broadcast after battle ends
-        self._broadcast_full_state(awaiting="none")
-        print(f"\n  Battle over! Winner: {self.winner.name if self.winner else 'draw'}")
-        self.sock1.close()
-        self.sock2.close()
+            # Final broadcast after battle ends
+            self._broadcast_full_state(awaiting="none")
+            print(
+                f"\n  Battle over! Winner: {self.winner.name if self.winner else 'draw'}"
+            )
+            self.sock1.close()
+            self.sock2.close()
 
     # ── Action collection ─────────────────────────────────────────────────────
 
